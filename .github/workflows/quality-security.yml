@@ -1,12 +1,13 @@
+---
 name: Code Quality & Security Scan
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main,master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main,master]
   schedule:
-    - cron: '0 2 * * 1'  # Weekly security scan
+    - cron: '0 2 * * 1'
 
 jobs:
   quality-check:
@@ -71,21 +72,21 @@ jobs:
     - name: Generate security report
       run: |
         cat <<EOF > SECURITY_REPORT.md
-        # Security Scan Report
+
         **Scan Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
         **Commit:** ${GITHUB_SHA:-unknown}
-        
-        ## Scans Performed
+
+
         - ✅ Shell script syntax validation
         - ✅ YAML configuration validation
         - ✅ Secret detection
         - ✅ File permission audit
         - ✅ Vulnerability scanning (Trivy)
-        
-        ## Status
+
+
         All critical security checks passed.
-        
-        ## Recommendations
+
+
         1. Review any ShellCheck warnings
         2. Ensure all scripts have proper error handling
         3. Keep dependencies updated

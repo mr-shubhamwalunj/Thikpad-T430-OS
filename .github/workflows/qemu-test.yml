@@ -1,14 +1,15 @@
+---
 name: QEMU Hardware Compatibility Test
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main,master]
     paths:
       - 'kernel/**'
       - 'build/**'
       - '.github/workflows/qemu-test.yml'
   pull_request:
-    branches: [ main, master ]
+    branches: [main,master]
     paths:
       - 'kernel/**'
       - 'build/**'
@@ -20,7 +21,7 @@ jobs:
     strategy:
       matrix:
         test-type: [boot, hardware-detect, performance]
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -38,14 +39,14 @@ jobs:
     - name: Download or build ISO
       run: |
         mkdir -p artifacts
-        # Try to download from previous build artifact if available
+
         if [ -n "${{ secrets.GITHUB_TOKEN }}" ]; then
           echo "Attempting to fetch latest ISO..."
         fi
-        
-        # Create a minimal test ISO if none exists
+
+
         cat <<'EOF' > artifacts/test-boot.sh
-        #!/bin/bash
+
         echo "T430 OS Test Boot"
         echo "CPU: Intel i5-3320M (simulated)"
         echo "GPU: Intel HD 4000 (simulated)"
@@ -60,17 +61,17 @@ jobs:
       run: |
         cd artifacts
         cat <<'QEMU_SCRIPT' > test-qemu.sh
-        #!/bin/bash
+
         set -e
-        
+
         echo "🔍 Starting QEMU T430 Simulation Test"
         echo "Test Type: $1"
-        
-        # T430 Hardware Simulation Parameters
+
+
         CPU_MODEL="IvyBridge"
-        RAM_SIZE=2048  # 2GB for CI, real T430 has 8GB
+        RAM_SIZE=2048
         DISK_SIZE=10G
-        
+
         case $1 in
           "boot")
             echo "⏳ Testing basic boot sequence..."
@@ -84,14 +85,14 @@ jobs:
               -kernel ../kernel/bzImage 2>/dev/null || echo "Kernel not built, skipping kernel boot test"
             echo "✅ Boot test completed"
             ;;
-            
+
           "hardware-detect")
             echo "⏳ Testing hardware detection..."
             cat <<'HWTEST' > hw_test.sh
-            #!/bin/bash
+
             echo "Simulating T430 hardware detection:"
             echo "- CPU: Intel i5-3320M @ 3.30GHz (4 threads)"
-            echo "- GPU: Intel HD Graphics 4000 (Ivy Bridge)"
+            echo "- GPU: Intel HD Graphics 4000 "
             echo "- RAM: 8GB DDR3"
             echo "- Storage: SSD/HDD SATA"
             echo "- Network: Intel 82579LM Gigabit"
@@ -102,11 +103,11 @@ jobs:
             chmod +x hw_test.sh
             ./hw_test.sh
             ;;
-            
+
           "performance")
             echo "⏳ Running performance baseline tests..."
             cat <<'PERFTEST' > perf_test.sh
-            #!/bin/bash
+
             echo "Performance Baseline for T430:"
             echo "- Boot time target: <15s (SSD), <30s (HDD)"
             echo "- RAM usage target: <300MB idle"
@@ -119,10 +120,10 @@ jobs:
             ./perf_test.sh
             ;;
         esac
-        
+
         echo "✅ QEMU test '$1' completed successfully"
         QEMU_SCRIPT
-        
+
         chmod +x test-qemu.sh
         ./test-qemu.sh ${{ matrix.test-type }}
 
@@ -130,23 +131,23 @@ jobs:
       run: |
         mkdir -p test-results
         cat <<EOF > test-results/qemu-${{ matrix.test-type }}-report.md
-        # QEMU Test Report: ${{ matrix.test-type }}
-        
+
+
         **Test Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
         **Commit:** ${GITHUB_SHA:-unknown}
         **Test Type:** ${{ matrix.test-type }}
-        
-        ## Test Results
+
+
         ✅ Test completed successfully
-        
-        ## T430 Simulation Parameters
+
+
         - CPU Model: IvyBridge (i5-3320M equivalent)
         - RAM: 2GB (CI limited, real target 8GB)
-        - GPU: Intel HD 4000 (passthrough not available in CI)
+        - GPU: Intel HD 4000 (passthrough not available)
         - Display: Headless (serial console)
-        
-        ## Next Steps
-        - Test on real ThinkPad T430 hardware for full validation
+
+
+        - Test on real ThinkPad T430 hardware
         - Verify GPU acceleration with Intel HD 4000
         - Test TrackPoint and ThinkPad hotkeys
         EOF
@@ -166,12 +167,12 @@ jobs:
     steps:
     - name: Generate summary
       run: |
-        echo "## 🎯 QEMU Test Suite Summary" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "| Test Type | Status |" >> $GITHUB_STEP_SUMMARY
-        echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
-        echo "| Boot Test | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
-        echo "| Hardware Detection | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
-        echo "| Performance Baseline | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Note:** These are simulated tests. Real hardware testing on ThinkPad T430 is required for full validation." >> $GITHUB_STEP_SUMMARY
+        echo "## 🎯 QEMU Test Suite Summary"
+        echo ""
+        echo "| Test Type | Status |"
+        echo "|-----------|--------|"
+        echo "| Boot Test | ✅ Passed |"
+        echo "| Hardware Detection | ✅ Passed |"
+        echo "| Performance Baseline | ✅ Passed |"
+        echo ""
+        echo "**Note:** These are simulated tests. Real hardware testing required."

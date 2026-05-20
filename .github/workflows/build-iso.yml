@@ -1,10 +1,11 @@
+---
 name: Build T430 OS ISO
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main,master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main,master]
   workflow_dispatch:
 
 env:
@@ -16,7 +17,7 @@ jobs:
     runs-on: ubuntu-22.04
     permissions:
       contents: read
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -60,7 +61,7 @@ jobs:
       run: |
         echo "Configuring live-build..."
         chmod +x build.sh
-        
+
         # Run configuration if config scripts exist
         if [ -f config/bootstrap ]; then
           bash config/bootstrap
@@ -71,7 +72,7 @@ jobs:
         if [ -f config/chroot ]; then
           bash config/chroot
         fi
-        
+
         echo "Configuration complete"
         ls -la config/
 
@@ -80,11 +81,13 @@ jobs:
       run: |
         echo "Starting lb build..."
         sudo lb build 2>&1 | tee build.log
-        
+
         # Check for ISO output
         echo "Checking for ISO files..."
-        ls -la *.iso 2>/dev/null || ls -la live-image*.iso 2>/dev/null || echo "Looking for ISO..."
-        
+        ls -la *.iso 2>/dev/null || \
+          ls -la live-image*.iso 2>/dev/null || \
+          echo "Looking for ISO..."
+
         # Move ISO to artifacts directory
         mkdir -p ../artifacts
         if ls *.iso 2>/dev/null; then
@@ -92,34 +95,47 @@ jobs:
         elif ls live-image*.iso 2>/dev/null; then
           cp live-image*.iso ../artifacts/
         else
-          echo "Warning: No ISO found yet, checking binary directory..."
+          echo "Warning: No ISO found, checking binary..."
           find . -name "*.iso" -exec cp {} ../artifacts/ \; 2>/dev/null || true
         fi
 
     - name: Generate build report
       run: |
         mkdir -p artifacts
-        cat <<EOF > artifacts/BUILD_REPORT.md
-        # T430 OS Build Report
-        **Build Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-        **Commit:** ${GITHUB_SHA:-unknown}
-        **Runner:** ubuntu-22.04
-        
-        ## Build Status
-        - Configuration: $([ -d live-build/config ] && echo "✅ Success" || echo "❌ Missing")
-        - Build Log: $([ -f live-build/build.log ] && echo "✅ Generated" || echo "⚠️ Missing")
-        - ISO: $([ -f artifacts/*.iso ] 2>/dev/null && echo "✅ Created" || echo "❌ Failed")
-        
-        ## Package Lists
-        $(find live-build/config/package-lists -name "*.list.chroot" 2>/dev/null | while read f; do
-          echo "- $(basename $f): $(grep -v '^#' $f | grep -v '^$' | wc -l) packages"
-        done)
-        
-        ## Next Steps
-        1. Download ISO from artifacts
-        2. Test on real ThinkPad T430 hardware
-        3. Verify all T430-specific features work
-        EOF
+        {
+          echo "# T430 OS Build Report"
+          echo "**Build Date:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "**Commit:** ${GITHUB_SHA:-unknown}"
+          echo "**Runner:** ubuntu-22.04"
+          echo ""
+          echo "## Build Status"
+          if [ -d live-build/config ]; then
+            echo "- Configuration: ✅ Success"
+          else
+            echo "- Configuration: ❌ Missing"
+          fi
+          if [ -f live-build/build.log ]; then
+            echo "- Build Log: ✅ Generated"
+          else
+            echo "- Build Log: ⚠️ Missing"
+          fi
+          if ls artifacts/*.iso 2>/dev/null; then
+            echo "- ISO: ✅ Created"
+          else
+            echo "- ISO: ❌ Failed"
+          fi
+          echo ""
+          echo "## Package Lists"
+          find live-build/config/package-lists -name "*.list.chroot" 2>/dev/null | while read f; do
+            count=$(grep -v '^#' "$f" | grep -v '^$' | wc -l)
+            echo "- $(basename "$f"): $count packages"
+          done
+          echo ""
+          echo "## Next Steps"
+          echo "1. Download ISO from artifacts"
+          echo "2. Test on real ThinkPad T430 hardware"
+          echo "3. Verify all T430-specific features work"
+        } > artifacts/BUILD_REPORT.md
         cat artifacts/BUILD_REPORT.md
 
     - name: Upload ISO artifact
