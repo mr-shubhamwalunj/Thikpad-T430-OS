@@ -110,14 +110,33 @@ jobs:
           --memtest memtest86+
 
         echo "🛠️ Final mirror hardening..."
-        # Force correct security archive
-        echo "deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware" | \
+        
+        # 1. Force correct security archive (single line, no trailing spaces)
+        printf "deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware\n" | \
           sudo tee config/archives/security.chroot > /dev/null
 
-        echo "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" | \
+        # 2. Force correct debian archive
+        printf "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware\n" | \
           sudo tee config/archives/debian.chroot > /dev/null
 
-        # Remove any remaining Ubuntu/restricted garbage
+        # 3. CRITICAL: Create a chroot hook to fix /etc/apt/sources.list INSIDE the build
+        mkdir -p config/hooks/normal
+        cat << 'HOOK_EOF' | sudo tee config/hooks/normal/fix-sources-list.hook.chroot > /dev/null
+#!/bin/bash
+set -e
+echo "🔧 Fixing /etc/apt/sources.list inside chroot..."
+cat > /etc/apt/sources.list << 'SOURCES_EOF'
+deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
+deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
+deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware
+SOURCES_EOF
+chmod 644 /etc/apt/sources.list
+echo "✅ Sources list fixed, running apt-get update..."
+apt-get update
+HOOK_EOF
+        chmod +x config/hooks/normal/fix-sources-list.hook.chroot
+
+        # 4. Remove any remaining Ubuntu/restricted garbage from config files
         sudo find config/ -type f -exec sed -i \
           -e 's|security.ubuntu.com[^ ]*|security.debian.org/debian-security|g' \
           -e 's|archive.ubuntu.com|deb.debian.org|g' \
@@ -126,7 +145,12 @@ jobs:
 
         echo "✅ Final sources check:"
         ls -la config/archives/
-        cat config/archives/*.chroot 2>/dev/null || true
+        echo "--- security.chroot ---"
+        cat config/archives/security.chroot 2>/dev/null || true
+        echo "--- debian.chroot ---"
+        cat config/archives/debian.chroot 2>/dev/null || true
+        echo "--- Hook created ---"
+        ls -la config/hooks/normal/
 
     - name: Build the ISO with lb build
       working-directory: live-build
