@@ -22,6 +22,16 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Make scripts executable
+      run: |
+        chmod +x live-build/build.sh
+        chmod +x live-build/config/*.sh 2>/dev/null || true
+        chmod +x live-build/config/hooks/normal/*.hook.chroot 2>/dev/null || true
+        find live-build -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
+        find live-build -name "*.hook*" -exec chmod +x {} \; 2>/dev/null || true
+        ls -la live-build/
+        ls -la live-build/config/ 2>/dev/null || true
+
     - name: Free up disk space
       run: |
         sudo rm -rf /usr/share/dotnet
