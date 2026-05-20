@@ -82,19 +82,23 @@ jobs:
     - name: Configure live-build for T430
       working-directory: live-build
       run: |
-        echo "Configuring live-build..."
-        chmod +x build.sh
-
-        if [ -f config/bootstrap ]; then
-          bash config/bootstrap
-        fi
-        if [ -f config/binary ]; then
-          bash config/binary
-        fi
-        if [ -f config/chroot ]; then
-          bash config/chroot
-        fi
-
+        echo "Configuring live-build with lb config..."
+        
+        # Remove any previous config to ensure clean state
+        rm -rf config/* 2>/dev/null || true
+        
+        # Run lb config with ONLY command-line options
+        # live-build automatically creates and reads config/common, config/bootstrap, etc.
+        sudo lb config \
+          --distribution bookworm \
+          --architectures amd64 \
+          --mirror-bootstrap http://deb.debian.org/debian \
+          --binary-images iso-hybrid \
+          --linux-flavours amd64 \
+          --memtest memtest86+ \
+          --apt-indices false \
+          --debootstrap-options "--include=ca-certificates"
+        
         echo "Configuration complete"
         ls -la config/
 
