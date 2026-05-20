@@ -1,0 +1,202 @@
+#!/bin/bash
+# live-build/config/hooks/normal/01-t430-optimizations.hook.chroot
+# Apply T430-specific optimizations during build
+
+set -e
+
+echo "🔧 Applying ThinkPad T430 specific optimizations..."
+
+# Enable ThinkPad ACPI modules
+cat >> /etc/modules << EOF
+# ThinkPad T430 Specific Modules
+thinkpad_acpi
+tp_smapi
+hdaps
+iTCO_wdt
+intel_rapl_msr
+intel_powerclamp
+EOF
+
+# Configure CPU governor for Ivy Bridge
+mkdir -p /etc/systemd/system/cpu-governor.service
+cat > /etc/systemd/system/cpu-governor.service << 'EOF'
+[Unit]
+Description=Set CPU Governor to schedutil for T430
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'echo schedutil > /sys/devices/system/cpu/cpufreq/policy0/scaling_governor'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable cpu-governor.service
+
+# Optimize I/O scheduler for SSD (elevator=none in boot params)
+cat > /etc/udev/rules.d/60-t430-scheduler.rules << 'EOF'
+# Set no-op scheduler for SSDs on T430
+ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="none"
+ACTION=="add|change", KERNEL=="mmcblk[0-9]*", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="none"
+EOF
+
+# Enable ZRAM for better memory management (T430 has 8GB RAM)
+cat > /etc/systemd/system/zram-config.service << 'EOF'
+[Unit]
+Description=Configure ZRAM for T430
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/mkswap /dev/zram0
+ExecStart=/sbin/swapon /dev/zram0
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Configure ZRAM size (50% of RAM = 4GB for T430)
+cat > /etc/default/zram-config << 'EOF'
+ZRAM_SIZE=4294967296
+ZRAM_ALGORITHM=lz4
+EOF
+
+# Enable TRIM for SSD
+systemctl enable fstrim.timer
+
+# Configure thermald for Ivy Bridge thermal management
+cat > /etc/thermald/thermal-conf.xml << 'EOF'
+<?xml version="1.0"?>
+<ThermalConfiguration>
+  <Platform>
+    <Name>ThinkPad T430</Name>
+    <ProductName>.*T430.*</ProductName>
+    <Preference>Quiet</Preference>
+    <ThermalZones>
+      <ThermalZone>
+        <Type>x86_pkg_temp</Type>
+        <TripPoints>
+          <TripPoint>
+            <SensorType>x86_pkg_temp</SensorType>
+            <Temperature>70000</Temperature>
+            <Type>Passive</Type>
+            <ControlType>Processor</ControlType>
+            <CoolingDevice>intel_pstate</CoolingDevice>
+          </TripPoint>
+          <TripPoint>
+            <SensorType>x86_pkg_temp</SensorType>
+            <Temperature>85000</Temperature>
+            <Type>Active</Type>
+            <ControlType>Processor</ControlType>
+            <CoolingDevice>BCLK</CoolingDevice>
+          </TripPoint>
+        </TripPoints>
+      </ThermalZone>
+    </ThermalZones>
+  </Platform>
+</ThermalConfiguration>
+EOF
+
+# Enable thermald
+systemctl enable thermald
+
+# Configure IRQ balance for better performance
+cat > /etc/default/irqbalance << 'EOF'
+IRQBALANCE_ONESHOT=yes
+EOF
+
+# Optimize sysctl for T430
+cat >> /etc/sysctl.d/99-t430-optimization.conf << EOF
+# T430 Performance Optimizations
+vm.swappiness=10
+vm.vfs_cache_pressure=50
+vm.dirty_ratio=10
+vm.dirty_background_ratio=5
+kernel.sched_autogroup_enabled=1
+net.core.rmem_max=16777216
+net.core.wmem_max=16777216
+net.ipv4.tcp_rmem=4096 87380 16777216
+net.ipv4.tcp_wmem=4096 65536 16777216
+net.ipv4.tcp_congestion_control=bbr
+EOF
+
+# Enable Intel HD 4000 hardware acceleration
+mkdir -p /etc/X11/xorg.conf.d
+cat > /etc/X11/xorg.conf.d/20-intel.conf << 'EOF'
+Section "Device"
+  Identifier "Intel Graphics"
+  Driver "intel"
+  Option "AccelMethod" "sna"
+  Option "TearFree" "true"
+  Option "DRI" "3"
+  Option "TripleBuffer" "true"
+EndSection
+EOF
+
+# Configure power management for T430
+cat > /etc/powermgmt-base.d/t430 << 'EOF'
+#!/bin/sh
+# T430 Power Management
+# Enable ASPM for PCIe devices
+setpci -s 00:00.0 0x90.l=0x00000000
+EOF
+chmod +x /etc/powermgmt-base.d/t430
+
+# Preconfigure Network Manager for auto-connect
+mkdir -p /etc/NetworkManager/conf.d
+cat > /etc/NetworkManager/conf.d/t430-defaults.conf << 'EOF'
+[main]
+plugins=ifupdown,keyfile
+
+[ifupdown]
+managed=false
+
+[device]
+wifi.scan-rand-mac-address=no
+
+[connection]
+wifi.mac-address-randomization=1
+wifi.powersave=2
+EOF
+
+# Enable automatic firmware updates
+cat > /etc/fwupd/remotes.d/vendor.conf << 'EOF'
+[fwupd Remote]
+Enabled=true
+Title=Vendor Firmware
+MetadataURI=file:///var/lib/fwupd/remotes.d/vendor/metadata.xml.gz
+MetadataURI Sig=file:///var/lib/fwupd/remotes.d/vendor/metadata.xml.gz.sig
+Keyring=jcat
+Age=0
+Priority=1
+EOF
+
+# Configure ThinkPad hotkeys
+cat > /etc/acpi/events/thinkpad-hotkeys << 'EOF'
+event=ibm/hotkey LEN0068:.*
+action=/etc/acpi/thinkpad-hotkeys.sh
+EOF
+
+cat > /etc/acpi/thinkpad-hotkeys.sh << 'EOF'
+#!/bin/bash
+# Handle ThinkPad T430 hotkeys
+case "$1" in
+    *VOLUMEUP*) amixer set Master 5%+ ;;
+    *VOLUMEDOWN*) amixer set Master 5%- ;;
+    *MUTE*) amixer set Master toggle ;;
+    *BRIGHTNESSUP*) brightnessctl set +5% ;;
+    *BRIGHTNESSDOWN*) brightnessctl set 5%- ;;
+    *THINKPAD*) notify-send "ThinkPad Button" "Button pressed" ;;
+esac
+EOF
+chmod +x /etc/acpi/thinkpad-hotkeys.sh
+
+# Clean up unnecessary services
+systemctl disable bluetooth.service || true
+systemctl disable cups.service || true
+systemctl disable cups-browsed.service || true
+
+echo "✅ T430 optimizations applied successfully"

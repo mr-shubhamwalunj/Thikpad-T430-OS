@@ -1,0 +1,104 @@
+# T430 OS - AI & Self-Healing Tools Package List
+# Lightweight AI-powered system optimization and repair tools
+
+# Python Runtime (for AI tools)
+python3
+python3-pip
+python3-venv
+python3-dev
+
+# Essential Python Libraries for AI/Optimization
+python3-psutil
+python3-numpy
+python3-scipy
+python3-scikit-learn
+python3-onnxruntime
+
+# System Monitoring Libraries
+python3-setproctitle
+python3-daemon
+python3-lockfile
+
+# Rust Toolchain (for high-performance daemon)
+rustc
+cargo
+libssl-dev
+pkg-config
+
+# ONNX Runtime (Lightweight ML inference)
+# Will be built from source for minimal footprint
+
+# System Analysis Tools
+python3-dbus
+python3-gi
+gir1.2-gtk-3.0
+gir1.2-notify-0.7
+
+# Hardware Monitoring
+python3-smbus
+i2c-tools
+
+# Diagnostic Tools
+memtester
+stress-ng
+bonnie++
+iozone3
+
+# Filesystem Tools
+e2fsck
+btrfs-tools
+xfsdump
+
+# Network Diagnostics
+nmap
+net-tools
+tcpdump
+wireshark-common
+
+# Log Analysis
+logrotate
+anacron
+
+# Backup & Recovery
+clonezilla
+fsarchiver
+testdisk
+photorec
+
+# Configuration Management
+etckeeper
+
+# Self-Healing Dependencies
+python3-requests
+python3-urllib3
+python3-certifi
+python3-chardet
+python3-idna
+
+# SQLite for local AI data storage
+sqlite3
+libsqlite3-dev
+python3-sqlite3
+
+# JSON/YAML processing
+jq
+yq
+python3-yaml
+python3-jsonschema
+
+# Process Control
+supervisor
+systemd-coredump
+
+# Performance Profiling
+perf
+valgrind
+sysprof
+
+# Power Management
+tlp
+tlp-rdw
+powertop
+
+# Thermal Management
+thinkfan

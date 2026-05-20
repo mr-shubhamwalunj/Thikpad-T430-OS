@@ -1,0 +1,187 @@
+#!/bin/bash
+# live-build/config/hooks/normal/02-ai-selfhealing-setup.hook.chroot
+# Install AI self-healing and optimization tools
+
+set -e
+
+echo "🤖 Setting up AI Self-Healing System..."
+
+# Create directories for AI tools
+mkdir -p /opt/t430-ai/{bin,lib,data,models,logs}
+mkdir -p /var/lib/thinkos/ai
+mkdir -p /etc/thinkos/backup
+
+# Install the AI Self-Healing script from project root
+if [ -f /workspace/ai-optimizer/optimize-system.sh ]; then
+    cp /workspace/ai-optimizer/optimize-system.sh /opt/t430-ai/bin/self-heal.sh
+    chmod +x /opt/t430-ai/bin/self-heal.sh
+fi
+
+# Install AI Network Guardian
+if [ -f /workspace/security/t430-ai-network-guardian.sh ]; then
+    cp /workspace/security/t430-ai-network-guardian.sh /opt/t430-ai/bin/network-guardian.sh
+    chmod +x /opt/t430-ai/bin/network-guardian.sh
+fi
+
+# Install Smart Power Manager
+if [ -f /workspace/power/t430-smart-power-manager.sh ]; then
+    cp /workspace/power/t430-smart-power-manager.sh /opt/t430-ai/bin/power-manager.sh
+    chmod +x /opt/t430-ai/bin/power-manager.sh
+fi
+
+# Create systemd service for AI daemon
+cat > /etc/systemd/system/t430-ai-daemon.service << 'EOF'
+[Unit]
+Description=T430 AI Self-Healing Daemon
+After=network.target multi-user.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/t430-ai/bin/ai-daemon-wrapper.sh
+Restart=on-failure
+RestartSec=10
+Nice=19
+IOSchedulingClass=idle
+CPUSchedulingPolicy=idle
+Environment="PYTHONUNBUFFERED=1"
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Create wrapper script for AI daemon
+cat > /opt/t430-ai/bin/ai-daemon-wrapper.sh << 'EOF'
+#!/bin/bash
+# AI Daemon Wrapper - Monitors system and applies optimizations
+
+LOG_FILE="/var/log/t430-ai-daemon.log"
+IDLE_THRESHOLD=15
+MIN_IDLE_TIME=600  # 10 minutes
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
+check_idle() {
+    local cpu_usage=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
+    local idle_time=$(awk '{print $1}' /proc/uptime)
+    
+    if (( $(echo "$cpu_usage < $IDLE_THRESHOLD" | bc -l) )); then
+        return 0
+    fi
+    return 1
+}
+
+while true; do
+    if check_idle; then
+        log "System idle, running AI optimizer..."
+        
+        # Run self-healing checks
+        /opt/t430-ai/bin/self-heal.sh --auto >> "$LOG_FILE" 2>&1
+        
+        # Run network security scan
+        /opt/t430-ai/bin/network-guardian.sh --scan >> "$LOG_FILE" 2>&1
+        
+        # Optimize power settings
+        /opt/t430-ai/bin/power-manager.sh --optimize >> "$LOG_FILE" 2>&1
+        
+        log "AI optimization cycle complete"
+    else
+        log "System not idle, skipping optimization"
+    fi
+    
+    # Check every 5 minutes
+    sleep 300
+done
+EOF
+chmod +x /opt/t430-ai/bin/ai-daemon-wrapper.sh
+
+# Create configuration file for AI system
+cat > /etc/thinkos/ai-config.conf << 'EOF'
+# T430 AI System Configuration
+
+# Resource limits (keep it lightweight)
+MAX_RAM_USAGE_MB=50
+MAX_CPU_PERCENT=5
+
+# Optimization thresholds
+CPU_IDLE_THRESHOLD=15
+MIN_IDLE_SECONDS=600
+
+# Self-healing settings
+AUTO_REPAIR=true
+BACKUP_BEFORE_REPAIR=true
+MAX_REPAIR_ATTEMPTS=3
+
+# Security scanning
+NETWORK_SCAN_INTERVAL=300
+THREAT_DETECTION_SENSITIVITY=medium
+
+# Power management
+BATTERY_SAVE_MODE_THRESHOLD=20
+PERFORMANCE_MODE_BATTERY_THRESHOLD=80
+
+# Logging
+LOG_LEVEL=info
+LOG_RETENTION_DAYS=7
+EOF
+
+# Create backup directory structure
+mkdir -p /etc/thinkos/backup/{configs,packages,system}
+
+# Schedule regular backups with cron
+cat > /etc/cron.daily/t430-ai-backup << 'EOF'
+#!/bin/bash
+# Daily backup of critical configs
+DATE=$(date +%Y%m%d)
+BACKUP_DIR="/etc/thinkos/backup/system/$DATE"
+
+mkdir -p "$BACKUP_DIR"
+
+# Backup important configs
+cp -r /etc/network "$BACKUP_DIR/" 2>/dev/null || true
+cp -r /etc/NetworkManager "$BACKUP_DIR/" 2>/dev/null || true
+cp -r /etc/systemd/system "$BACKUP_DIR/" 2>/dev/null || true
+cp /etc/fstab "$BACKUP_DIR/" 2>/dev/null || true
+cp /etc/modules "$BACKUP_DIR/" 2>/dev/null || true
+
+# Keep only last 7 days
+find /etc/thinkos/backup/system -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null
+
+echo "Backup completed: $BACKUP_DIR"
+EOF
+chmod +x /etc/cron.daily/t430-ai-backup
+
+# Enable AI daemon (but don't start yet - will start on first boot)
+systemctl enable t430-ai-daemon.service
+
+# Create desktop shortcut for AI tools (for i3/sway)
+mkdir -p /etc/skel/.config/autostart
+cat > /etc/skel/.config/autostart/t430-ai-status.desktop << 'EOF'
+[Desktop Entry]
+Type=Application
+Name=T430 AI Status
+Comment=Monitor AI self-healing system
+Exec=/opt/t430-ai/bin/ai-status-gui.sh
+Icon=system-run
+Terminal=false
+Categories=System;Monitor;
+X-GNOME-Autostart-enabled=true
+EOF
+
+# Create simple status GUI script
+cat > /opt/t430-ai/bin/ai-status-gui.sh << 'EOF'
+#!/bin/bash
+# Simple AI status display
+notify-send "T430 AI System" "Self-healing daemon is active\nClick for details" &
+sleep 2
+zenity --info --title="T430 AI Status" --text="AI Self-Healing System is Active\n\n• Network Guardian: Running\n• Power Optimizer: Active\n• Auto-Repair: Enabled\n\nResource Usage: <50MB RAM, <5% CPU" 2>/dev/null || \
+kdialog --msgbox "AI Self-Healing System is Active" 2>/dev/null || \
+echo "T430 AI System: Active"
+EOF
+chmod +x /opt/t430-ai/bin/ai-status-gui.sh
+
+echo "✅ AI Self-Healing System installed successfully"

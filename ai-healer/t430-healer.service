@@ -1,0 +1,16 @@
+[Unit]
+Description=T430 AI Self-Healing System
+Documentation=https://github.com/t430-os/ai-healer
+DefaultDependencies=no
+After=local-fs.target
+Before=shutdown.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/t430-self-healer.sh --auto
+RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
