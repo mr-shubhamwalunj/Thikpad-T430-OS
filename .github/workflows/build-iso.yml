@@ -171,8 +171,6 @@ HOOK
         ls -la config/includes.chroot/etc/apt/ 2>/dev/null || echo "No includes yet"
         echo "--- Hooks ---"
         ls -la config/hooks/normal/
-          -e '/restricted/d' \
-          {} \;
 
         echo "✅ Final sources check:"
         ls -la config/archives/
