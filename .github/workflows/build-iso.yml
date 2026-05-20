@@ -79,92 +79,57 @@ jobs:
           lz4 \
           xz-utils
 
-    - name: Fix repository mirrors for Debian Bookworm (CRITICAL)
+    - name: Nuclear Clean - Remove ALL contamination sources
       working-directory: live-build
       run: |
-        echo "🔧 CRITICAL: Pre-configuring Debian mirrors BEFORE lb config..."
+        echo "🧹 NUCLEAR CLEAN: Removing ALL potential Ubuntu mirror contamination..."
         
-        # 1. Clean up any stale config/archives to prevent conflicts
-        sudo rm -rf config/archives
+        # Remove EVERYTHING that could contain bad mirrors
+        sudo rm -rf config/ auto/ cache/ .build/ 2>/dev/null || true
         
-        # 2. Create fresh archives directory
-        sudo mkdir -p config/archives
+        # Also clean any preseed or package-lists with Ubuntu references
+        find . -type f \( -name "*.preseed" -o -name "*.cfg" \) -exec grep -l "ubuntu" {} \; 2>/dev/null | xargs rm -f || true
         
-        # 3. Create CORRECT list.chroot (Debian only, NO Ubuntu)
-        sudo tee config/archives/list.chroot > /dev/null <<ARCHIVES_EOF
-deb http://deb.debian.org/debian bookworm main contrib non-free
-deb http://deb.debian.org/debian bookworm-updates main contrib non-free
-ARCHIVES_EOF
-        
-        # 4. Create CORRECT security.chroot (Debian security ONLY)
-        sudo tee config/archives/security.chroot > /dev/null <<ARCHIVES_EOF
-deb http://security.debian.org/debian-security bookworm-security main contrib non-free
-ARCHIVES_EOF
-        
-        echo "✅ Pre-configured archives:"
-        ls -la config/archives/
-        echo "--- list.chroot ---"
-        cat config/archives/list.chroot
-        echo "--- security.chroot ---"
-        cat config/archives/security.chroot
+        echo "✅ Clean slate achieved"
 
-        echo "✅ Mirror fix complete"
-
-    - name: Configure live-build for T430
+    - name: Configure live-build (Clean & Strong)
       working-directory: live-build
       run: |
-        echo "Configuring live-build with lb config..."
-        
-        # Remove any previous config to ensure clean state
-        rm -rf config/* 2>/dev/null || true
-        
-        # Run lb config with ONLY command-line options
-        # live-build automatically creates and reads config/common, config/bootstrap, etc.
+        echo "🔧 Running lb config with proper Debian settings..."
         sudo lb config \
           --distribution bookworm \
           --architectures amd64 \
-          --mirror-bootstrap http://deb.debian.org/debian \
+          --area "main contrib non-free non-free-firmware" \
+          --mirror-bootstrap "http://deb.debian.org/debian" \
+          --mirror-chroot "http://deb.debian.org/debian" \
+          --mirror-binary "http://deb.debian.org/debian" \
+          --mirror-bootstrap-security "http://security.debian.org/debian-security" \
+          --mirror-chroot-security "http://security.debian.org/debian-security" \
+          --mirror-binary-security "http://security.debian.org/debian-security" \
           --binary-images iso-hybrid \
           --linux-flavours amd64 \
-          --memtest memtest86+ \
-          --apt-indices false
-        
-        echo "Configuration complete"
-        ls -la config/
-        
-        echo "🔧 CRITICAL: Fixing repository mirrors AFTER lb config generates files..."
-        
-        # 1. Fix the main sources.list in config/archives/list.chroot (use sudo for root-owned files)
-        if [ -f config/archives/list.chroot ]; then
-          sudo sed -i 's|http://security.ubuntu.com/ubuntu.*|http://security.debian.org/debian-security bookworm-security main contrib non-free|g' config/archives/list.chroot
-          sudo sed -i '/restricted/d' config/archives/list.chroot
-        fi
-        
-        # 2. Fix security.chroot specifically (use sudo for root-owned files)
-        if [ -f config/archives/security.chroot ]; then
-          sudo sed -i 's|^http.*security.*|http://security.debian.org/debian-security bookworm-security main contrib non-free|g' config/archives/security.chroot
-          sudo sed -i '/restricted/d' config/archives/security.chroot
-        else
-          # Create it if missing
-          echo "deb http://security.debian.org/debian-security bookworm-security main contrib non-free" | sudo tee config/archives/security.chroot > /dev/null
-        fi
-        
-        # 3. Fix ALL archive config files (use sudo for root-owned files)
-        find config/archives -type f -exec sudo sed -i \
-          -e 's|security.ubuntu.com/ubuntu|security.debian.org/debian-security|g' \
+          --apt-indices false \
+          --debian-installer false \
+          --memtest memtest86+
+
+        echo "🛠️ Final mirror hardening..."
+        # Force correct security archive
+        echo "deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware" | \
+          sudo tee config/archives/security.chroot > /dev/null
+
+        echo "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" | \
+          sudo tee config/archives/debian.chroot > /dev/null
+
+        # Remove any remaining Ubuntu/restricted garbage
+        sudo find config/ -type f -exec sed -i \
+          -e 's|security.ubuntu.com[^ ]*|security.debian.org/debian-security|g' \
           -e 's|archive.ubuntu.com|deb.debian.org|g' \
-          -e 's|jammy-security|bookworm-security|g' \
-          -e 's|focal-security|bookworm-security|g' \
-          -e 's|bionic-security|bookworm-security|g' \
           -e '/restricted/d' \
-          {} \; 2>/dev/null || true
-        
-        echo "✅ Verifying fixed sources:"
-        echo "--- config/archives/list.chroot ---"
-        sudo cat config/archives/list.chroot 2>/dev/null || echo "File not found"
-        echo ""
-        echo "--- config/archives/security.chroot ---"
-        sudo cat config/archives/security.chroot 2>/dev/null || echo "File not found"
+          {} \;
+
+        echo "✅ Final sources check:"
+        ls -la config/archives/
+        cat config/archives/*.chroot 2>/dev/null || true
 
     - name: Build the ISO with lb build
       working-directory: live-build
