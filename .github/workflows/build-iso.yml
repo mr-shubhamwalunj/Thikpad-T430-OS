@@ -95,7 +95,7 @@ jobs:
     - name: Configure live-build (Clean & Strong)
       working-directory: live-build
       run: |
-        echo "🔧 Running lb config with proper Debian settings..."
+        echo "🔧 Running lb config with MINIMAL settings + --apt false..."
         sudo lb config \
           --distribution bookworm \
           --architectures amd64 \
@@ -107,7 +107,8 @@ jobs:
           --linux-flavours amd64 \
           --apt-indices false \
           --debian-installer false \
-          --memtest memtest86+
+          --memtest memtest86+ \
+          --apt false
 
         echo "🛠️ CRITICAL: Creating includes.chroot template to override sources.list..."
         
