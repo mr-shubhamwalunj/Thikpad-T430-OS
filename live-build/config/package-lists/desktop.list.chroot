@@ -1,0 +1,134 @@
+# T430 OS - Desktop Environment Package List
+# Lightweight i3/sway based desktop optimized for T430
+
+# Window Manager (Choose one - i3 for X11, sway for Wayland)
+i3
+i3status
+i3lock
+i3-gaps
+dmenu
+
+# Wayland Compositor (Alternative to i3)
+sway
+swaybg
+swaybar
+swayidle
+swaylock
+wofi
+
+# Compositor for i3 (smooth rendering)
+picom
+
+# Application Launcher
+rofi
+
+# File Manager
+thunar
+thunar-volman
+tumbler
+file-roller
+
+# Terminal Emulator
+alacritty
+kitty
+
+# Text Editor (Full featured)
+neovim
+emacs-nox
+
+# Web Browser (Lightweight)
+firefox-esr
+
+# System Tray & Notifications
+nm-applet
+pavucontrol
+volumeicon-alsa
+dunst
+
+# Font & Theme
+fonts-dejavu-core
+fonts-liberation
+fonts-font-awesome
+gtk2-engines-pixbuf
+gtk3-engines-breeze
+adwaita-icon-theme
+papirus-icon-theme
+
+# Display Server
+xserver-xorg-core
+xserver-xorg-input-libinput
+xserver-xorg-video-intel
+x11-xserver-utils
+xorg-docs-core
+
+# Audio
+pulseaudio
+pulseaudio-utils
+pavucontrol
+alsa-base
+alsa-utils
+
+# Bluetooth (Optional - T430 has it)
+bluetooth
+bluez
+blueman
+
+# Printing (Optional)
+cups
+cups-client
+system-config-printer-common
+
+# Screenshots & Recording
+scrot
+flameshot
+obs-studio
+
+# Archive Tools
+unzip
+unrar
+p7zip-full
+
+# PDF Viewer
+evince
+
+# Image Viewer
+feh
+sxiv
+
+# Media Player
+mpv
+vlc
+
+# Clipboard Manager
+clipit
+xclip
+
+# Battery Monitor
+upower
+acpi
+
+# Brightness Control
+brightnessctl
+xbacklight
+
+# ThinkPad Specific Tools
+thinkpad-acpi-dkms
+tpb
+hdapsd
+
+# GTK Configuration
+lxappearance
+obconf
+
+# Network Tools (GUI)
+network-manager-gnome
+wifi-radar
+
+# System Monitoring
+gnome-system-monitor
+conky-all
+
+# Backup Tools
+timeshift
+rsync
+grsync

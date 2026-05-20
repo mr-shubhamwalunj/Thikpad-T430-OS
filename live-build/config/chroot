@@ -1,0 +1,12 @@
+#!/bin/bash
+# live-build/config/chroot - Chroot environment configuration for T430 OS
+
+set -e
+
+lb config \
+    --chroot-filesystem ext4 \
+    --chroot-shm-size default \
+    --keyring-packages debian-keyring debian-archive-keyring \
+    "${@}"
+
+echo "✅ Chroot configuration created for T430 OS"

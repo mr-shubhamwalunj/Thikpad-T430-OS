@@ -1,0 +1,21 @@
+#!/bin/bash
+# live-build/config/bootstrap - Bootstrap configuration for T430 OS
+
+set -e
+
+# Use Debian Bookworm (stable, lightweight)
+lb config \
+    --distribution bookworm \
+    --archive-mirror http://deb.debian.org/debian \
+    --security-mirror http://security.debian.org/debian-security \
+    --architectures amd64 \
+    --linux-flavours amd64 \
+    --bootstrap-qemu-arches amd64 \
+    --bootstrap-qemu-static /usr/bin/qemu-x86_64-static \
+    --includes none \
+    --memtest memtest86+ \
+    "${@}"
+
+echo "✅ Bootstrap configuration created for T430 OS"
+echo "   Base: Debian Bookworm (amd64)"
+echo "   Optimized for: Intel Ivy Bridge (T430)"

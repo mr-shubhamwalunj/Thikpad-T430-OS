@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=T430 Self-Healer
+Name[fr]=T430 Auto-Réparation
+Comment=Fix system problems automatically (no internet needed)
+Comment[fr]=Réparer les problèmes système automatiquement (sans internet)
+Exec=/usr/local/bin/t430-self-healer.sh --interactive
+Icon=system-run
+Terminal=true
+Type=Application
+Categories=System;Utility;
+Keywords=repair;fix;heal;system;troubleshoot;
+StartupNotify=true
+X-GNOME-Autostart-enabled=false

@@ -1,0 +1,110 @@
+# T430 OS - Essential Package List
+# Optimized for ThinkPad T430 (Ivy Bridge, Intel HD 4000)
+# Minimal footprint with maximum performance
+
+# Core System Utilities
+coreutils
+util-linux
+systemd
+systemd-sysv
+sudo
+bash
+dash
+procps
+lsb-release
+ca-certificates
+gnupg
+
+# Hardware Support (T430 Specific)
+intel-microcode
+iucode-tool
+firmware-misc-nonfree
+firmware-intel-sound
+tp-smapi-dkms
+acpi-call-dkms
+lm-sensors
+smartmontools
+hwinfo
+pciutils
+usbutils
+
+# Network (Essential Only)
+network-manager
+network-manager-gnome
+firmware-iwlwifi
+wireless-tools
+wpasupplicant
+openssh-server
+openssh-client
+curl
+wget
+
+# Filesystem & Storage
+e2fsprogs
+btrfs-progs
+xfsprogs
+ntfs-3g
+exfat-fuse
+lvm2
+cryptsetup
+zram-tools
+fstrim
+
+# Performance & Optimization
+zram-config
+irqbalance
+thermald
+cpufrequtils
+powertop
+
+# Security
+fail2ban
+ufw
+rkhunter
+chkrootkit
+aide
+
+# Logging & Diagnostics
+journalctl
+rsyslog
+htop
+iotop
+iftop
+sysstat
+strace
+lsof
+
+# Text Editors (Minimal)
+nano
+vim-tiny
+
+# Essential Tools
+less
+man-db
+manpages
+file
+xz-utils
+gzip
+bzip2
+tar
+grep
+findutils
+sed
+awk
+diffutils
+patch
+time
+which
+
+# Firmware Updates
+fwupd
+libfwupdplugin5
+
+# Bootloader
+grub-pc
+grub-pc-bin
+os-prober
+
+# Documentation (Minimal)
+debian-reference-common
+debian-reference-en

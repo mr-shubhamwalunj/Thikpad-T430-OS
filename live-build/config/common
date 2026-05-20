@@ -1,0 +1,51 @@
+#!/bin/bash
+# live-build/config/common - Common settings for T430 OS build
+
+# Distribution settings
+export LB_DISTRIBUTION="bookworm"
+export LB_ARCHIVE_MIRROR="http://deb.debian.org/debian"
+export LB_SECURITY_MIRROR="http://security.debian.org/debian-security"
+
+# Build mode
+export LB_MODE="live"
+export LB_BOOTAPPEND_LIVE="boot=live components quiet splash elevator=none iommu=soft zswap.enabled=1"
+export LB_BOOTAPPEND_INSTALL="elevator=none iommu=soft zswap.enabled=1"
+
+# Architecture optimized for T430 (Ivy Bridge)
+export LB_ARCHITECTURE="amd64"
+export LB_LINUX_FLAVOURS="amd64"
+
+# Binary format
+export LB_BINARY_IMAGES="iso-hybrid"
+export LB_DEBIAN_INSTALLER="false"
+
+# ISO settings
+export LB_ISO_APPLICATION="T430-OS"
+export LB_ISO_PREPARER="ThinkPad T430 Optimized OS Project"
+export LB_ISO_PUBLISHER="T430 OS Team"
+export LB_ISO_VOLUME="T430_OS"
+
+# Chroot settings
+export LB_CHROOT_FILESYSTEM="ext4"
+export LB_MEMTEST="memtest86+"
+
+# Bootstrap settings
+export LB_BOOTSTRAP_INCLUDE="base-files bash coreutils util-linux systemd sudo openssh-server network-manager firmware-misc-nonfree intel-microcode iucode-tool"
+export LB_BOOTSTRAP_EXCLUDE="xserver-xorg-video-all xserver-xorg-input-all bluetooth bluez cups cups-browsed printer-driver-*"
+
+# Package lists
+export LB_PACKAGES_LISTS="standard"
+
+# Hooks directory
+export LB_HOOKS="config/hooks"
+
+# Includes
+export LB_INCLUDES_CHROOT="config/includes.chroot"
+export LB_INCLUDES_BINARY="config/includes.binary"
+export LB_INCLUDES_INSTALLER="config/includes.installer"
+
+echo "✅ T430 OS live-build common configuration loaded"
+echo "   Distribution: ${LB_DISTRIBUTION}"
+echo "   Architecture: ${LB_ARCHITECTURE} (optimized for Ivy Bridge)"
+echo "   Mode: ${LB_MODE}"
+echo "   Boot options: ${LB_BOOTAPPEND_LIVE}"
