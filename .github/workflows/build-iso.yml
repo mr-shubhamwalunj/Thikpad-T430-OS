@@ -120,7 +120,7 @@ jobs:
           sudo tee config/archives/debian.chroot > /dev/null
 
         # 3. CRITICAL: Create a chroot hook to fix /etc/apt/sources.list INSIDE the build
-        mkdir -p config/hooks/normal
+        sudo mkdir -p config/hooks/normal
         printf '#!/bin/bash\nset -e\necho "Fixing sources list..."\ncat > /etc/apt/sources.list <<EOF\ndeb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware\ndeb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware\ndeb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware\nEOF\nchmod 644 /etc/apt/sources.list\napt-get update\n' | sudo tee config/hooks/normal/fix-sources-list.hook.chroot > /dev/null
         sudo chmod +x config/hooks/normal/fix-sources-list.hook.chroot
 
