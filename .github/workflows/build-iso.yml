@@ -92,9 +92,12 @@ jobs:
           -e 's|focal-security|bookworm-security|g' \
           -e 's|bionic-security|bookworm-security|g' {} \; 2>/dev/null || true
         
-        # Ensure proper Debian security mirror is used
+        # Ensure proper Debian security mirror is used (use sudo as lb config creates root-owned files)
         if [ -f config/archives/security.chroot ]; then
-          sed -i 's|^http.*security.*|http://security.debian.org/debian-security bookworm-security main contrib non-free|g' config/archives/security.chroot
+          sudo sed -i 's|^http.*security.*|http://security.debian.org/debian-security bookworm-security main contrib non-free|g' config/archives/security.chroot
+          echo "✅ Fixed security.chroot mirror"
+        else
+          echo "⚠️ security.chroot not found yet, will be created by lb config"
         fi
         
         echo "✅ Mirror fix complete"
