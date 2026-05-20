@@ -82,24 +82,32 @@ jobs:
     - name: Fix repository mirrors for Debian Bookworm (CRITICAL)
       working-directory: live-build
       run: |
-        echo "🔧 Fixing repository mirrors to prevent Ubuntu/Debian conflicts..."
+        echo "🔧 CRITICAL: Pre-configuring Debian mirrors BEFORE lb config..."
         
-        # Replace any Ubuntu mirrors with Debian equivalents in ALL config files
-        find config -type f \( -name "*.list*" -o -name "bootstrap" -o -name "binary" -o -name "common" -o -name "chroot" \) -exec sed -i \
-          -e 's|security.ubuntu.com/ubuntu|security.debian.org/debian-security|g' \
-          -e 's|archive.ubuntu.com|deb.debian.org|g' \
-          -e 's|jammy-security|bookworm-security|g' \
-          -e 's|focal-security|bookworm-security|g' \
-          -e 's|bionic-security|bookworm-security|g' {} \; 2>/dev/null || true
+        # 1. Clean up any stale config/archives to prevent conflicts
+        sudo rm -rf config/archives
         
-        # Ensure proper Debian security mirror is used (use sudo as lb config creates root-owned files)
-        if [ -f config/archives/security.chroot ]; then
-          sudo sed -i 's|^http.*security.*|http://security.debian.org/debian-security bookworm-security main contrib non-free|g' config/archives/security.chroot
-          echo "✅ Fixed security.chroot mirror"
-        else
-          echo "⚠️ security.chroot not found yet, will be created by lb config"
-        fi
+        # 2. Create fresh archives directory
+        sudo mkdir -p config/archives
         
+        # 3. Create CORRECT list.chroot (Debian only, NO Ubuntu)
+        sudo tee config/archives/list.chroot > /dev/null <<ARCHIVES_EOF
+deb http://deb.debian.org/debian bookworm main contrib non-free
+deb http://deb.debian.org/debian bookworm-updates main contrib non-free
+ARCHIVES_EOF
+        
+        # 4. Create CORRECT security.chroot (Debian security ONLY)
+        sudo tee config/archives/security.chroot > /dev/null <<ARCHIVES_EOF
+deb http://security.debian.org/debian-security bookworm-security main contrib non-free
+ARCHIVES_EOF
+        
+        echo "✅ Pre-configured archives:"
+        ls -la config/archives/
+        echo "--- list.chroot ---"
+        cat config/archives/list.chroot
+        echo "--- security.chroot ---"
+        cat config/archives/security.chroot
+
         echo "✅ Mirror fix complete"
 
     - name: Configure live-build for T430
