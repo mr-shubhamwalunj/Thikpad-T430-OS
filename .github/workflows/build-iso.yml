@@ -120,6 +120,40 @@ jobs:
         
         echo "Configuration complete"
         ls -la config/
+        
+        echo "🔧 CRITICAL: Fixing repository mirrors AFTER lb config generates files..."
+        
+        # 1. Fix the main sources.list in config/archives/list.chroot
+        if [ -f config/archives/list.chroot ]; then
+          sed -i 's|http://security.ubuntu.com/ubuntu.*|http://security.debian.org/debian-security bookworm-security main contrib non-free|g' config/archives/list.chroot
+          sed -i '/restricted/d' config/archives/list.chroot
+        fi
+        
+        # 2. Fix security.chroot specifically
+        if [ -f config/archives/security.chroot ]; then
+          sed -i 's|^http.*security.*|http://security.debian.org/debian-security bookworm-security main contrib non-free|g' config/archives/security.chroot
+          sed -i '/restricted/d' config/archives/security.chroot
+        else
+          # Create it if missing
+          echo "deb http://security.debian.org/debian-security bookworm-security main contrib non-free" > config/archives/security.chroot
+        fi
+        
+        # 3. Fix ALL archive config files
+        find config/archives -type f -exec sed -i \
+          -e 's|security.ubuntu.com/ubuntu|security.debian.org/debian-security|g' \
+          -e 's|archive.ubuntu.com|deb.debian.org|g' \
+          -e 's|jammy-security|bookworm-security|g' \
+          -e 's|focal-security|bookworm-security|g' \
+          -e 's|bionic-security|bookworm-security|g' \
+          -e '/restricted/d' \
+          {} \; 2>/dev/null || true
+        
+        echo "✅ Verifying fixed sources:"
+        echo "--- config/archives/list.chroot ---"
+        cat config/archives/list.chroot 2>/dev/null || echo "File not found"
+        echo ""
+        echo "--- config/archives/security.chroot ---"
+        cat config/archives/security.chroot 2>/dev/null || echo "File not found"
 
     - name: Build the ISO with lb build
       working-directory: live-build
