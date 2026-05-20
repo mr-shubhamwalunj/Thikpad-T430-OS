@@ -96,8 +96,7 @@ jobs:
           --binary-images iso-hybrid \
           --linux-flavours amd64 \
           --memtest memtest86+ \
-          --apt-indices false \
-          --debootstrap-options "--include=ca-certificates"
+          --apt-indices false
         
         echo "Configuration complete"
         ls -la config/
