@@ -79,6 +79,26 @@ jobs:
           lz4 \
           xz-utils
 
+    - name: Fix repository mirrors for Debian Bookworm (CRITICAL)
+      working-directory: live-build
+      run: |
+        echo "🔧 Fixing repository mirrors to prevent Ubuntu/Debian conflicts..."
+        
+        # Replace any Ubuntu mirrors with Debian equivalents in ALL config files
+        find config -type f \( -name "*.list*" -o -name "bootstrap" -o -name "binary" -o -name "common" -o -name "chroot" \) -exec sed -i \
+          -e 's|security.ubuntu.com/ubuntu|security.debian.org/debian-security|g' \
+          -e 's|archive.ubuntu.com|deb.debian.org|g' \
+          -e 's|jammy-security|bookworm-security|g' \
+          -e 's|focal-security|bookworm-security|g' \
+          -e 's|bionic-security|bookworm-security|g' {} \; 2>/dev/null || true
+        
+        # Ensure proper Debian security mirror is used
+        if [ -f config/archives/security.chroot ]; then
+          sed -i 's|^http.*security.*|http://security.debian.org/debian-security bookworm-security main contrib non-free|g' config/archives/security.chroot
+        fi
+        
+        echo "✅ Mirror fix complete"
+
     - name: Configure live-build for T430
       working-directory: live-build
       run: |
