@@ -1,12 +1,7 @@
 #!/bin/bash
-# live-build/config/chroot - Chroot environment configuration for T430 OS
+# live-build/config/chroot - Chroot environment settings for T430 OS
+# NOTE: This file is read by live-build, NOT executed directly
+# DO NOT put lb config commands here
 
-set -e
-
-lb config \
-    --chroot-filesystem ext4 \
-    --chroot-shm-size default \
-    --keyring-packages debian-keyring debian-archive-keyring \
-    "${@}"
-
-echo "✅ Chroot configuration created for T430 OS"
+# Chroot stage settings (automatically read by live-build)
+echo "Chroot configuration loaded for T430 OS"

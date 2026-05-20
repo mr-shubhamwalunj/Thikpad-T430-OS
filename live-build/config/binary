@@ -1,21 +1,12 @@
 #!/bin/bash
-# live-build/config/binary - Binary image configuration for T430 OS
+# live-build/config/binary - Binary image settings for T430 OS
+# NOTE: This file is read by live-build, NOT executed directly
+# DO NOT put lb config commands here
 
-set -e
+# Binary stage settings (automatically read by live-build)
+# ISO Hybrid format with optimized boot parameters for T430
 
-lb config \
-    --binary-images iso-hybrid \
-    --iso-application "T430-OS" \
-    --iso-preparer "ThinkPad T430 Optimized OS Project" \
-    --iso-publisher "T430 OS Team" \
-    --iso-volume "T430_OS" \
-    --debian-installer false \
-    --memtest memtest86+ \
-    --bootappend-live "boot=live components quiet splash elevator=none iommu=soft zswap.enabled=1" \
-    --chroot-filesystem ext4 \
-    "${@}"
-
-echo "✅ Binary configuration created for T430 OS"
-echo "   Output: ISO Hybrid (USB bootable)"
-echo "   Boot options: elevator=none iommu=soft zswap.enabled=1"
-echo "   Optimized for SSD and Ivy Bridge GPU"
+echo "Binary configuration loaded for T430 OS"
+echo "Output: ISO Hybrid (USB bootable)"
+echo "Boot options: elevator=none iommu=soft zswap.enabled=1"
+echo "Optimized for SSD and Ivy Bridge GPU"

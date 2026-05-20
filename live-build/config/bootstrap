@@ -1,17 +1,11 @@
 #!/bin/bash
-# live-build/config/bootstrap - Bootstrap configuration for T430 OS
+# live-build/config/bootstrap - Bootstrap settings for T430 OS
+# NOTE: This file is read by live-build, NOT executed directly
+# DO NOT put lb config commands here
 
-set -e
+# Bootstrap stage settings (automatically read by live-build)
+# These override defaults but don't replace lb config command-line options
 
-# Use Debian Bookworm (stable, lightweight)
-lb config \
-    --distribution bookworm \
-    --mirror-bootstrap http://deb.debian.org/debian \
-    --architectures amd64 \
-    --linux-flavours amd64 \
-    --memtest memtest86+ \
-    "${@}"
-
-echo "✅ Bootstrap configuration created for T430 OS"
-echo "   Base: Debian Bookworm (amd64)"
-echo "   Optimized for: Intel Ivy Bridge (T430)"
+echo "Bootstrap configuration loaded for T430 OS"
+echo "Base: Debian Bookworm (amd64)"
+echo "Optimized for: Intel Ivy Bridge (T430)"
