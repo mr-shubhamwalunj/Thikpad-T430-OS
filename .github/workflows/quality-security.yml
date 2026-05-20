@@ -3,9 +3,9 @@ name: Code Quality & Security Scan
 
 on:
   push:
-    branches: [main,master]
+    branches: [ main, master ]
   pull_request:
-    branches: [main,master]
+    branches: [ main, master ]
   schedule:
     - cron: '0 2 * * 1'
 
@@ -19,21 +19,31 @@ jobs:
     - name: Check shell script syntax
       run: |
         sudo apt-get install -y shellcheck
-        find . -name "*.sh" -type f ! -path "./.git/*" -exec shellcheck {} \; || echo "ShellCheck completed with warnings"
+        find . -name "*.sh" -type f ! -path "./.git/*" \
+          -exec shellcheck {} \; || \
+          echo "ShellCheck completed with warnings"
 
     - name: Validate YAML files
       run: |
         pip install yamllint
-        yamllint .github/workflows/*.yml || echo "YAML lint completed"
+        yamllint .github/workflows/*.yml || \
+          echo "YAML lint completed"
 
     - name: Check for hardcoded secrets
       run: |
         echo "Scanning for potential secrets..."
-        if grep -r "password\s*=" --include="*.sh" --include="*.yml" --include="*.conf" . 2>/dev/null | grep -v "example\|template"; then
+        if grep -r "password\s*=" \
+            --include="*.sh" \
+            --include="*.yml" \
+            --include="*.conf" . 2>/dev/null | \
+            grep -v "example\|template"; then
           echo "⚠️ Potential hardcoded passwords found!"
           exit 1
         fi
-        if grep -r "API_KEY\|SECRET_KEY\|TOKEN" --include="*.sh" --include="*.yml" . 2>/dev/null | grep -v "example\|template\|#"; then
+        if grep -r "API_KEY\|SECRET_KEY\|TOKEN" \
+            --include="*.sh" \
+            --include="*.yml" . 2>/dev/null | \
+            grep -v "example\|template\|#"; then
           echo "⚠️ Potential hardcoded API keys found!"
           exit 1
         fi
@@ -50,6 +60,9 @@ jobs:
 
   security-scan:
     runs-on: ubuntu-22.04
+    permissions:
+      security-events: write
+      contents: read
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -64,31 +77,31 @@ jobs:
         severity: 'CRITICAL,HIGH'
 
     - name: Upload Trivy results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4
       if: always()
       with:
         sarif_file: 'trivy-results.sarif'
 
     - name: Generate security report
       run: |
-        cat <<EOF > SECURITY_REPORT.md
-
-        **Scan Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-        **Commit:** ${GITHUB_SHA:-unknown}
-
-
-        - ✅ Shell script syntax validation
-        - ✅ YAML configuration validation
-        - ✅ Secret detection
-        - ✅ File permission audit
-        - ✅ Vulnerability scanning (Trivy)
-
-
-        All critical security checks passed.
-
-
-        1. Review any ShellCheck warnings
-        2. Ensure all scripts have proper error handling
-        3. Keep dependencies updated
-        EOF
+        {
+          echo "# Security Scan Report"
+          echo "**Scan Date:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "**Commit:** ${GITHUB_SHA:-unknown}"
+          echo ""
+          echo "## Scans Performed"
+          echo "- ✅ Shell script syntax validation"
+          echo "- ✅ YAML configuration validation"
+          echo "- ✅ Secret detection"
+          echo "- ✅ File permission audit"
+          echo "- ✅ Vulnerability scanning (Trivy)"
+          echo ""
+          echo "## Result"
+          echo "All critical security checks passed."
+          echo ""
+          echo "## Recommendations"
+          echo "1. Review any ShellCheck warnings"
+          echo "2. Ensure all scripts have proper error handling"
+          echo "3. Keep dependencies updated"
+        } > SECURITY_REPORT.md
         cat SECURITY_REPORT.md

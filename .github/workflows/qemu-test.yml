@@ -3,13 +3,13 @@ name: QEMU Hardware Compatibility Test
 
 on:
   push:
-    branches: [main,master]
+    branches: [ main, master ]
     paths:
       - 'kernel/**'
       - 'build/**'
       - '.github/workflows/qemu-test.yml'
   pull_request:
-    branches: [main,master]
+    branches: [ main, master ]
     paths:
       - 'kernel/**'
       - 'build/**'
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        test-type: [boot, hardware-detect, performance]
+        test-type: [ boot, hardware-detect, performance ]
 
     steps:
     - name: Checkout code
@@ -44,9 +44,7 @@ jobs:
           echo "Attempting to fetch latest ISO..."
         fi
 
-
         cat <<'EOF' > artifacts/test-boot.sh
-
         echo "T430 OS Test Boot"
         echo "CPU: Intel i5-3320M (simulated)"
         echo "GPU: Intel HD 4000 (simulated)"
@@ -61,12 +59,10 @@ jobs:
       run: |
         cd artifacts
         cat <<'QEMU_SCRIPT' > test-qemu.sh
-
         set -e
 
         echo "🔍 Starting QEMU T430 Simulation Test"
         echo "Test Type: $1"
-
 
         CPU_MODEL="IvyBridge"
         RAM_SIZE=2048
@@ -82,17 +78,17 @@ jobs:
               -display none \
               -serial stdio \
               -no-reboot \
-              -kernel ../kernel/bzImage 2>/dev/null || echo "Kernel not built, skipping kernel boot test"
+              -kernel ../kernel/bzImage 2>/dev/null || \
+              echo "Kernel not built, skipping kernel boot test"
             echo "✅ Boot test completed"
             ;;
 
           "hardware-detect")
             echo "⏳ Testing hardware detection..."
             cat <<'HWTEST' > hw_test.sh
-
             echo "Simulating T430 hardware detection:"
             echo "- CPU: Intel i5-3320M @ 3.30GHz (4 threads)"
-            echo "- GPU: Intel HD Graphics 4000 "
+            echo "- GPU: Intel HD Graphics 4000"
             echo "- RAM: 8GB DDR3"
             echo "- Storage: SSD/HDD SATA"
             echo "- Network: Intel 82579LM Gigabit"
@@ -107,7 +103,6 @@ jobs:
           "performance")
             echo "⏳ Running performance baseline tests..."
             cat <<'PERFTEST' > perf_test.sh
-
             echo "Performance Baseline for T430:"
             echo "- Boot time target: <15s (SSD), <30s (HDD)"
             echo "- RAM usage target: <300MB idle"
@@ -130,27 +125,25 @@ jobs:
     - name: Generate test report
       run: |
         mkdir -p test-results
-        cat <<EOF > test-results/qemu-${{ matrix.test-type }}-report.md
-
-
-        **Test Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-        **Commit:** ${GITHUB_SHA:-unknown}
-        **Test Type:** ${{ matrix.test-type }}
-
-
-        ✅ Test completed successfully
-
-
-        - CPU Model: IvyBridge (i5-3320M equivalent)
-        - RAM: 2GB (CI limited, real target 8GB)
-        - GPU: Intel HD 4000 (passthrough not available)
-        - Display: Headless (serial console)
-
-
-        - Test on real ThinkPad T430 hardware
-        - Verify GPU acceleration with Intel HD 4000
-        - Test TrackPoint and ThinkPad hotkeys
-        EOF
+        {
+          echo "# QEMU Test Report: ${{ matrix.test-type }}"
+          echo "**Test Date:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "**Commit:** ${GITHUB_SHA:-unknown}"
+          echo "**Test Type:** ${{ matrix.test-type }}"
+          echo ""
+          echo "✅ Test completed successfully"
+          echo ""
+          echo "## Environment"
+          echo "- CPU Model: IvyBridge (i5-3320M equivalent)"
+          echo "- RAM: 2GB (CI limited, real target 8GB)"
+          echo "- GPU: Intel HD 4000 (passthrough not available)"
+          echo "- Display: Headless (serial console)"
+          echo ""
+          echo "## Next Steps"
+          echo "- Test on real ThinkPad T430 hardware"
+          echo "- Verify GPU acceleration with Intel HD 4000"
+          echo "- Test TrackPoint and ThinkPad hotkeys"
+        } > test-results/qemu-${{ matrix.test-type }}-report.md
         cat test-results/qemu-${{ matrix.test-type }}-report.md
 
     - name: Upload test results
@@ -175,4 +168,5 @@ jobs:
         echo "| Hardware Detection | ✅ Passed |"
         echo "| Performance Baseline | ✅ Passed |"
         echo ""
-        echo "**Note:** These are simulated tests. Real hardware testing required."
+        echo "**Note:** These are simulated tests."
+        echo "Real hardware testing required."

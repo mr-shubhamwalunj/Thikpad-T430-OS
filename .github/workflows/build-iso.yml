@@ -3,9 +3,9 @@ name: Build T430 OS ISO
 
 on:
   push:
-    branches: [main,master]
+    branches: [ main, master ]
   pull_request:
-    branches: [main,master]
+    branches: [ main, master ]
   workflow_dispatch:
 
 env:
@@ -72,7 +72,6 @@ jobs:
         echo "Configuring live-build..."
         chmod +x build.sh
 
-        # Run configuration if config scripts exist
         if [ -f config/bootstrap ]; then
           bash config/bootstrap
         fi
@@ -92,13 +91,11 @@ jobs:
         echo "Starting lb build..."
         sudo lb build 2>&1 | tee build.log
 
-        # Check for ISO output
         echo "Checking for ISO files..."
         ls -la *.iso 2>/dev/null || \
           ls -la live-image*.iso 2>/dev/null || \
           echo "Looking for ISO..."
 
-        # Move ISO to artifacts directory
         mkdir -p ../artifacts
         if ls *.iso 2>/dev/null; then
           cp *.iso ../artifacts/
@@ -129,16 +126,19 @@ jobs:
           else
             echo "- Build Log: ⚠️ Missing"
           fi
-          if ls artifacts/*.iso 2>/dev/null; then
-            echo "- ISO: ✅ Created"
+          iso_count=$(ls artifacts/*.iso 2>/dev/null | wc -l)
+          if [ "$iso_count" -gt 0 ]; then
+            echo "- ISO: ✅ Created ($iso_count file(s))"
           else
             echo "- ISO: ❌ Failed"
           fi
           echo ""
           echo "## Package Lists"
-          find live-build/config/package-lists -name "*.list.chroot" 2>/dev/null | while read f; do
-            count=$(grep -v '^#' "$f" | grep -v '^$' | wc -l)
-            echo "- $(basename "$f"): $count packages"
+          for f in live-build/config/package-lists/*.list.chroot; do
+            if [ -f "$f" ]; then
+              count=$(grep -v '^#' "$f" | grep -v '^$' | wc -l)
+              echo "- $(basename "$f"): $count packages"
+            fi
           done
           echo ""
           echo "## Next Steps"
