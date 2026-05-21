@@ -1,0 +1,20 @@
+#!/bin/bash
+# CRITICAL FIX: Force clean sources.list before ANY apt commands
+# This runs INSIDE the chroot at the earliest possible moment
+
+echo "=== HOOK: Forcing clean sources.list ==="
+
+cat > /etc/apt/sources.list << 'SOURCES'
+deb http://deb.debian.org/debian bookworm main contrib non-free
+deb http://deb.debian.org/debian bookworm-updates main contrib non-free
+deb http://security.debian.org/debian-security bookworm-security main contrib non-free
+SOURCES
+
+echo "✓ Written clean sources.list:"
+cat -A /etc/apt/sources.list
+
+echo "=== Testing apt update immediately ==="
+apt-get update || { echo "✗ apt-get update FAILED"; exit 1; }
+echo "✓ apt-get update SUCCESSFUL"
+
+exit 0
