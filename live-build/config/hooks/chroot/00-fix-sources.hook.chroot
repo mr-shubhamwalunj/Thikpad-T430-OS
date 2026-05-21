@@ -1,0 +1,23 @@
+#!/bin/bash
+# Force clean sources.list to prevent malformed entries
+# This runs INSIDE the chroot before ANY apt commands
+
+set -e
+
+echo "🔧 [HOOK] Forcing clean sources.list..."
+
+# Create a guaranteed clean sources.list
+cat > /etc/apt/sources.list << 'SOURCES'
+deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
+deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
+deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware
+SOURCES
+
+echo "✅ [HOOK] sources.list created successfully"
+cat /etc/apt/sources.list
+
+# Update apt immediately to verify
+echo "🔄 [HOOK] Running apt-get update to verify..."
+apt-get update -qq
+
+echo "✅ [HOOK] sources.list verified and apt updated successfully"
