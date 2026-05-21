@@ -139,12 +139,15 @@ SOURCES
 
         echo "🛠️ Final mirror hardening..."
         
-        # 1. Force correct security archive
-        printf "deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware\n" | \
+        # Create archives directory first
+        sudo mkdir -p config/archives
+        
+        # 1. Force correct security archive (EXACT format required)
+        echo "deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware" | \
           sudo tee config/archives/security.chroot > /dev/null
 
-        # 2. Force correct debian archive
-        printf "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware\n" | \
+        # 2. Force correct debian archive (EXACT format required)
+        echo "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" | \
           sudo tee config/archives/debian.chroot > /dev/null
 
         # 3. Backup hook (runs inside chroot if template fails)
@@ -173,21 +176,26 @@ HOOK
           {} \;
         
         echo "✅ Final configuration verified:"
-        echo "--- Archives ---"
+        echo "--- Archives directory ---"
         ls -la config/archives/
-        echo "--- Includes ---"
+        echo "--- Includes directory ---"
         ls -la config/includes.chroot/etc/apt/ 2>/dev/null || echo "No includes yet"
-        echo "--- Hooks ---"
+        echo "--- Hooks directory ---"
         ls -la config/hooks/normal/
-
-        echo "✅ Final sources check:"
-        ls -la config/archives/
-        echo "--- security.chroot ---"
-        cat config/archives/security.chroot 2>/dev/null || true
-        echo "--- debian.chroot ---"
-        cat config/archives/debian.chroot 2>/dev/null || true
-        echo "--- Hook created ---"
-        ls -la config/hooks/normal/
+        
+        echo ""
+        echo "=== DEBUG: Archive file contents ==="
+        echo "--- config/archives/security.chroot ---"
+        cat config/archives/security.chroot 2>/dev/null || echo "FILE MISSING"
+        echo ""
+        echo "--- config/archives/debian.chroot ---"
+        cat config/archives/debian.chroot 2>/dev/null || echo "FILE MISSING"
+        echo ""
+        echo "--- config/includes.chroot/etc/apt/sources.list ---"
+        cat config/includes.chroot/etc/apt/sources.list 2>/dev/null || echo "FILE MISSING"
+        echo ""
+        echo "--- Hook script ---"
+        cat config/hooks/normal/01-fix-sources.hook.chroot 2>/dev/null || echo "HOOK MISSING"
 
     - name: Build the ISO with lb build
       working-directory: live-build
