@@ -152,19 +152,21 @@ jobs:
 
         # 3. Backup hook (runs inside chroot if template fails)
         sudo mkdir -p config/hooks/normal
-        cat > /tmp/fix-sources.hook.chroot << 'ENDHOOK'
-#!/bin/bash
-set -e
-echo "[HOOK] Fixing /etc/apt/sources.list..."
-cat > /etc/apt/sources.list << 'ENDSOURCES'
-deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
-deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
-deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware
-ENDSOURCES
-chmod 644 /etc/apt/sources.list
-echo "[HOOK] Sources.list fixed!"
-cat /etc/apt/sources.list
-ENDHOOK
+        
+        # Write hook script using printf to avoid nested heredoc issues
+        printf '%s\n' '#!/bin/bash' \
+          'set -e' \
+          'echo "[HOOK] Fixing /etc/apt/sources.list..."' \
+          'cat > /etc/apt/sources.list << EOF' \
+          'deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware' \
+          'deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware' \
+          'deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware' \
+          'EOF' \
+          'chmod 644 /etc/apt/sources.list' \
+          'echo "[HOOK] Sources.list fixed!"' \
+          'cat /etc/apt/sources.list' \
+          > /tmp/fix-sources.hook.chroot
+        
         sudo cp /tmp/fix-sources.hook.chroot config/hooks/normal/01-fix-sources.hook.chroot
         sudo chmod +x config/hooks/normal/01-fix-sources.hook.chroot
 
