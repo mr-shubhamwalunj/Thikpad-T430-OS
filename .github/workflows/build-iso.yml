@@ -77,7 +77,15 @@ jobs:
           cpio \
           zstd \
           lz4 \
-          xz-utils
+          xz-utils \
+          bc \
+          kmod \
+          flex \
+          bison \
+          dwarves \
+          debsums \
+          smartmontools \
+          lm-sensors
 
     - name: Nuclear Clean - Remove ALL contamination sources
       working-directory: live-build
