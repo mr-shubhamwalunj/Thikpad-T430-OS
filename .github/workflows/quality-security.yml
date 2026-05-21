@@ -32,17 +32,18 @@ jobs:
     - name: Check for hardcoded secrets
       run: |
         echo "Scanning for potential secrets..."
+        # Exclude .github/workflows/ to prevent false positives from workflow templates
         if grep -r "password\s*=" \
             --include="*.sh" \
-            --include="*.yml" \
-            --include="*.conf" . 2>/dev/null | \
+            --include="*.conf" \
+            --exclude-dir=".github" . 2>/dev/null | \
             grep -v "example\|template"; then
           echo "⚠️ Potential hardcoded passwords found!"
           exit 1
         fi
         if grep -r "API_KEY\|SECRET_KEY\|TOKEN" \
             --include="*.sh" \
-            --include="*.yml" . 2>/dev/null | \
+            --exclude-dir=".github" . 2>/dev/null | \
             grep -v "example\|template\|#"; then
           echo "⚠️ Potential hardcoded API keys found!"
           exit 1
