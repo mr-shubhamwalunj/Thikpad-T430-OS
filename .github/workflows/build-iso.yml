@@ -46,9 +46,9 @@ jobs:
         if [ ! -f live-build/config/archives/debian.list.chroot ]; then
           echo "⚠️ Creating fallback debian.list.chroot..."
           printf '%s\n' \
-            "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" \
-            "deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware" \
-            "deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware" \
+            "deb http://deb.debian.org/debian bookworm main contrib non-free" \
+            "deb http://deb.debian.org/debian bookworm-updates main contrib non-free" \
+            "deb http://security.debian.org/debian-security bookworm-security main contrib non-free" \
             > live-build/config/archives/debian.list.chroot
           echo "✓ Fallback file created"
           cat -A live-build/config/archives/debian.list.chroot
@@ -160,7 +160,7 @@ jobs:
         sudo lb config \
           --distribution bookworm \
           --architectures amd64 \
-          --archive-areas "main contrib non-free non-free-firmware" \
+          --archive-areas "main contrib non-free" \
           --mirror-bootstrap "http://deb.debian.org/debian" \
           --mirror-chroot "http://deb.debian.org/debian" \
           --mirror-binary "http://deb.debian.org/debian" \
@@ -179,9 +179,9 @@ jobs:
         # Write the CORRECT sources.list that will be copied into the chroot
         # Using printf to avoid heredoc YAML parsing issues
         printf '%s\n' \
-          "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" \
-          "deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware" \
-          "deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware" \
+          "deb http://deb.debian.org/debian bookworm main contrib non-free" \
+          "deb http://deb.debian.org/debian bookworm-updates main contrib non-free" \
+          "deb http://security.debian.org/debian-security bookworm-security main contrib non-free" \
           > /tmp/sources.list.override
         
         sudo cp /tmp/sources.list.override config/includes.chroot/etc/apt/sources.list
@@ -196,11 +196,11 @@ jobs:
         sudo mkdir -p config/archives
         
         # 1. Force correct security archive (EXACT format required)
-        printf '%s\n' "deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware" | \
+        printf '%s\n' "deb http://security.debian.org/debian-security bookworm-security main contrib non-free" | \
           sudo tee config/archives/security.chroot > /dev/null
 
         # 2. Force correct debian archive (EXACT format required)
-        printf '%s\n' "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" | \
+        printf '%s\n' "deb http://deb.debian.org/debian bookworm main contrib non-free" | \
           sudo tee config/archives/debian.chroot > /dev/null
 
         # 3. Backup hook (runs inside chroot if template fails)
@@ -211,9 +211,9 @@ jobs:
           'set -e' \
           'echo "[HOOK] Fixing /etc/apt/sources.list..."' \
           'cat > /etc/apt/sources.list << EOF' \
-          'deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware' \
-          'deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware' \
-          'deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware' \
+          'deb http://deb.debian.org/debian bookworm main contrib non-free' \
+          'deb http://deb.debian.org/debian bookworm-updates main contrib non-free' \
+          'deb http://security.debian.org/debian-security bookworm-security main contrib non-free' \
           'EOF' \
           'chmod 644 /etc/apt/sources.list' \
           'echo "[HOOK] Sources.list fixed!"' \
