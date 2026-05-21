@@ -100,6 +100,24 @@ jobs:
         
         echo "✅ Clean slate achieved"
 
+    - name: Debug sources.list configuration
+      run: |
+        echo "=== Archive config content ==="
+        if [ -f live-build/config/archives/debian.list.chroot ]; then
+          cat live-build/config/archives/debian.list.chroot
+          echo ""
+          echo "=== Expected format check ==="
+          if grep -E "^deb http.*bookworm" live-build/config/archives/debian.list.chroot > /dev/null; then
+            echo "✓ Format OK"
+          else
+            echo "✗ Format ERROR"
+            exit 1
+          fi
+        else
+          echo "⚠️ debian.list.chroot not found, checking alternatives..."
+          ls -la live-build/config/archives/ 2>/dev/null || echo "No archives dir"
+        fi
+
     - name: Configure live-build (Clean & Strong)
       working-directory: live-build
       run: |
