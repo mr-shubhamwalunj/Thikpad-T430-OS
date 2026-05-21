@@ -124,12 +124,12 @@ jobs:
         sudo mkdir -p config/includes.chroot/etc/apt/
         
         # Write the CORRECT sources.list that will be copied into the chroot
-        # This is the MOST RELIABLE method - it overrides live-build's generated file
-        cat > /tmp/sources.list.override << 'SOURCES'
-deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
-deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
-deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware
-SOURCES
+        # Using printf to avoid heredoc YAML parsing issues
+        printf '%s\n' \
+          "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" \
+          "deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware" \
+          "deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware" \
+          > /tmp/sources.list.override
         
         sudo cp /tmp/sources.list.override config/includes.chroot/etc/apt/sources.list
         sudo chmod 644 config/includes.chroot/etc/apt/sources.list
@@ -143,28 +143,28 @@ SOURCES
         sudo mkdir -p config/archives
         
         # 1. Force correct security archive (EXACT format required)
-        echo "deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware" | \
+        printf '%s\n' "deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware" | \
           sudo tee config/archives/security.chroot > /dev/null
 
         # 2. Force correct debian archive (EXACT format required)
-        echo "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" | \
+        printf '%s\n' "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" | \
           sudo tee config/archives/debian.chroot > /dev/null
 
         # 3. Backup hook (runs inside chroot if template fails)
         sudo mkdir -p config/hooks/normal
-        cat > /tmp/fix-sources.hook.chroot << 'HOOK'
+        cat > /tmp/fix-sources.hook.chroot << 'ENDHOOK'
 #!/bin/bash
 set -e
 echo "[HOOK] Fixing /etc/apt/sources.list..."
-cat > /etc/apt/sources.list << 'SOURCES'
+cat > /etc/apt/sources.list << 'ENDSOURCES'
 deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
 deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
 deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware
-SOURCES
+ENDSOURCES
 chmod 644 /etc/apt/sources.list
 echo "[HOOK] Sources.list fixed!"
 cat /etc/apt/sources.list
-HOOK
+ENDHOOK
         sudo cp /tmp/fix-sources.hook.chroot config/hooks/normal/01-fix-sources.hook.chroot
         sudo chmod +x config/hooks/normal/01-fix-sources.hook.chroot
 
