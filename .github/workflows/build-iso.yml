@@ -20,7 +20,41 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.sha }}  # Ensure exact commit is checked out
+
+    - name: Debug - Verify archives directory exists
+      run: |
+        echo "=== Current directory ==="
+        pwd
+        echo "=== Contents of live-build/config/archives/ ==="
+        ls -la live-build/config/archives/ 2>&1 || echo "Directory not found"
+        echo "=== Content of debian.list.chroot (if exists) ==="
+        if [ -f live-build/config/archives/debian.list.chroot ]; then
+          echo "✓ File found!"
+          cat -A live-build/config/archives/debian.list.chroot
+        else
+          echo "✗ ERROR: debian.list.chroot NOT FOUND at expected path"
+          echo "Searching for similar files..."
+          find . -name "*debian*.list*" -o -name "*debian*.chroot" 2>/dev/null || echo "No matches"
+        fi
+
+    - name: Fallback - Create debian.list.chroot if missing
+      run: |
+        mkdir -p live-build/config/archives
+        if [ ! -f live-build/config/archives/debian.list.chroot ]; then
+          echo "⚠️ Creating fallback debian.list.chroot..."
+          cat > live-build/config/archives/debian.list.chroot << 'EOF'
+deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
+deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
+deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware
+EOF
+          echo "✓ Fallback file created"
+          cat -A live-build/config/archives/debian.list.chroot
+        else
+          echo "✓ debian.list.chroot already exists, skipping fallback"
+        fi
 
     - name: Make ALL scripts executable (CRITICAL FIX)
       run: |
