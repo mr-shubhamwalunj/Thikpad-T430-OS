@@ -1,0 +1,38 @@
+#!/bin/bash
+set -e
+
+echo "============================================================"
+echo "BINARY HOOK: Injecting clean sources.list (Nuclear Fix)"
+echo "============================================================"
+
+# Create the file directly with exact content
+cat > /etc/apt/sources.list <<EOF
+deb http://deb.debian.org/debian bookworm main contrib non-free
+deb http://deb.debian.org/debian bookworm-updates main contrib non-free
+deb http://security.debian.org/debian-security bookworm-security main contrib non-free
+EOF
+
+echo "✓ Injected clean sources.list:"
+cat /etc/apt/sources.list
+echo "============================================================"
+
+# Verify format immediately
+if grep -q "^deb http.*bookworm" /etc/apt/sources.list; then
+    echo "✓ Format validation PASSED"
+else
+    echo "✗ Format validation FAILED - exiting"
+    exit 1
+fi
+
+# Try to update apt to prove it works
+echo "Running apt-get update to verify..."
+if apt-get update -qq; then
+    echo "✓ apt-get update SUCCESS - sources.list is valid!"
+else
+    echo "✗ apt-get update FAILED - something is still wrong"
+    exit 1
+fi
+
+echo "============================================================"
+echo "BINARY HOOK COMPLETE"
+echo "============================================================"
