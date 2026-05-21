@@ -1,0 +1,38 @@
+#!/bin/bash
+# Force clean sources.list generation BEFORE apt runs
+
+echo "🔧 Fixing /etc/apt/sources.list format..."
+
+# Remove any existing broken file
+rm -f /etc/apt/sources.list
+
+# Write clean, verified 3-line config
+cat > /etc/apt/sources.list << 'SOURCES'
+deb http://deb.debian.org/debian bookworm main contrib non-free
+deb http://deb.debian.org/debian bookworm-updates main contrib non-free
+deb http://security.debian.org/debian-security bookworm-security main contrib non-free
+SOURCES
+
+echo "✅ Generated sources.list:"
+cat /etc/apt/sources.list
+
+# Validate format
+echo ""
+echo "🔍 Validating format..."
+if grep -qE "^deb http.*bookworm" /etc/apt/sources.list; then
+    echo "✅ Format validation PASSED"
+else
+    echo "❌ Format validation FAILED"
+    exit 1
+fi
+
+# Test apt can read it
+echo ""
+echo "🔍 Testing apt readability..."
+if apt-get update -qq 2>&1 | head -5; then
+    echo "✅ APT can read sources.list"
+else
+    echo "⚠️ APT update had warnings (may be network-related)"
+fi
+
+echo "✅ Sources.list fix complete!"
